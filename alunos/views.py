@@ -32,3 +32,30 @@ def deletar_aluno(request, id):
     aluno = get_object_or_404(Alunos, id=id)
     aluno.delete()
     return redirect('criar_alunos')
+
+
+def exportar_excel(request):
+    # Buscar os alunos cadastrados no banco
+    alunos = Alunos.objects.all().values()
+
+    # Converter para DataFrame do Pandas
+    df = pd.DataFrame(alunos)
+
+    # Renomear as colunas para algo mais amigável (opcional)
+    df.rename(columns={
+        'id': 'ID',
+        'nome': 'Nome',
+        'email': 'Email',
+        'data_nascimento': 'Data de Nascimento',
+        'plano': 'Plano',
+        'ativo': 'Ativo'
+    }, inplace=True)
+
+    # Criar resposta HTTP para download
+    response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    response['Content-Disposition'] = 'attachment; filename=alunos.xlsx'
+
+    # Salvar o DataFrame em um arquivo Excel na resposta HTTP
+    df.to_excel(response, index=False, engine='openpyxl')
+
+    return response
